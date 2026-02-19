@@ -7,21 +7,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            /* Notion-style Charcoal Grey */
             background-color: #191919; 
             min-height: 100vh;
             margin: 0;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
-        /* Tooltip or feedback message box */
         #status-message {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             padding: 12px 24px;
-            background: #2eaadc; /* Notion-style blue accent for success */
+            background: #2eaadc;
             color: white;
             border-radius: 6px;
             display: none;
@@ -33,7 +31,6 @@
 </head>
 <body class="relative">
 
-    <!-- The Button: Positioned Top Right of the Body -->
     <button 
         id="generateBtn"
         class="absolute top-6 right-6 px-4 py-1.5 bg-[#2383e2] hover:bg-[#007acc] text-white text-sm font-medium rounded transition-all duration-200 active:scale-95 focus:outline-none"
@@ -41,7 +38,6 @@
         Generate Invoice
     </button>
 
-    <!-- Empty State Content for Visual Balance -->
     <div class="flex items-center justify-center min-height-screen h-screen">
         <div class="text-center opacity-30">
             <svg class="mx-auto h-16 w-16 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -51,24 +47,75 @@
         </div>
     </div>
 
-    <!-- UI Message Element -->
     <div id="status-message">Invoice generated successfully!</div>
 
     <script>
-        document.getElementById('generateBtn').addEventListener('click', function() {
-            const message = document.getElementById('status-message');
-            
-            // Show the success message
-            message.style.display = 'block';
-            
-            // Hide it after 3 seconds
+        // =============================
+        // 🔴 REPLACE WITH YOUR WEBHOOK
+        // =============================
+        const N8N_WEBHOOK_URL = "https://YOUR-N8N-DOMAIN/webhook/invoice-generate";
+        // =============================
+
+        const params = new URLSearchParams(window.location.search);
+        const email = params.get("email");
+
+        const generateBtn = document.getElementById('generateBtn');
+        const message = document.getElementById('status-message');
+
+        if (!email) {
+            generateBtn.disabled = true;
+            generateBtn.innerText = "Invalid Access";
+            generateBtn.classList.add("opacity-50", "cursor-not-allowed");
+            console.error("No email parameter found in URL.");
+        }
+
+        generateBtn.addEventListener('click', async function() {
+
+            if (!email) return;
+
+            try {
+                message.innerText = "Generating invoice...";
+                message.style.display = 'block';
+                generateBtn.disabled = true;
+
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: email
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Server error");
+                }
+
+                const data = await response.json();
+
+                if (data.success && data.documentUrl) {
+                    message.innerText = "Invoice generated successfully!";
+
+                    setTimeout(() => {
+                        window.open(data.documentUrl, "_blank");
+                    }, 800);
+
+                } else {
+                    throw new Error("Invalid response from server");
+                }
+
+            } catch (error) {
+                console.error(error);
+                message.innerText = "Something went wrong.";
+            }
+
             setTimeout(() => {
                 message.style.display = 'none';
+                generateBtn.disabled = false;
             }, 3000);
-
-            console.log("Invoice generation triggered.");
         });
     </script>
-</body>
 
+</body>
 </html>
