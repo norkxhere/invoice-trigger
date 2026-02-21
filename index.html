@@ -14,6 +14,7 @@
             overflow-x: hidden;
         }
 
+        /* Notification Toast */
         #notification-toast {
             position: fixed;
             bottom: -100px;
@@ -38,6 +39,7 @@
             opacity: 1;
         }
 
+        /* Spinner */
         .spinner {
             border: 3px solid rgba(0, 0, 0, 0.1);
             width: 20px;
@@ -53,6 +55,7 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Card Animation */
         .fade-in-up {
             animation: fadeInUp 0.6s ease-out forwards;
         }
@@ -181,6 +184,7 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
 
             try {
+                // Wait indefinitely until n8n responds
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -191,24 +195,17 @@
 
                 const contentType = response.headers.get("content-type") || "";
 
-                // ======= FIXED LOGIC =======
                 if (!contentType.includes("application/json")) {
-                    // Treat as binary PDF
+                    // Binary PDF
                     const blob = await response.blob();
                     if (!blob || blob.size === 0) throw new Error("Received empty file from server");
                     currentDocumentUrl = window.URL.createObjectURL(blob);
                 } else {
-                    // Treat as JSON but only after workflow finishes
+                    // JSON response
                     const data = await response.json();
-
-                    // Wait/retry if data has no documentUrl yet
-                    if (!data.documentUrl || data.documentUrl === "") {
-                        throw new Error("Server returned JSON but no file link was provided. Wait until n8n finishes processing.");
-                    }
-
+                    if (!data.documentUrl) throw new Error("Server returned JSON but no file link was provided.");
                     currentDocumentUrl = data.documentUrl;
                 }
-                // ======= END FIXED LOGIC =======
 
                 resultContainer.classList.remove('hidden');
                 btnSpinner.classList.add('hidden');
