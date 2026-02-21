@@ -11,21 +11,64 @@
             min-height: 100vh;
             margin: 0;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
         }
 
-        #status-message {
+        /* Notification Styling */
+        #notification-toast {
             position: fixed;
-            bottom: 20px;
+            bottom: -100px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 24px;
-            background: #2eaadc;
-            color: white;
-            border-radius: 6px;
-            display: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            z-index: 50;
-            font-size: 0.9rem;
+            padding: 14px 28px;
+            background: #000000;
+            color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            font-size: 0.95rem;
+            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s;
+            opacity: 0;
+            border: 1px solid rgba(255,255,255,0.1);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        #notification-toast.show {
+            bottom: 30px;
+            opacity: 1;
+        }
+
+        /* Spinner Styling */
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border-left-color: #000;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Card Animation */
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
@@ -36,13 +79,7 @@
         
         <!-- Top Row: User Name and Image -->
         <div class="flex justify-between items-end w-full">
-            <!-- User Name Display -->
-            <div 
-                id="userDisplay"
-                class="text-white text-3xl font-bold tracking-tight"
-            ></div>
-
-            <!-- Header Image -->
+            <div id="userDisplay" class="text-white text-3xl font-bold tracking-tight"></div>
             <div class="flex items-center">
                 <img 
                     src="https://res.cloudinary.com/dobnqmfsg/image/upload/v1770995309/Screenshot_2026-02-13_151541-removebg-preview_ifdgq3.png" 
@@ -56,39 +93,65 @@
         <!-- Full-Width Divider Line -->
         <div class="h-px w-full bg-white/10"></div>
 
-        <!-- Action Area (Moved to the right) -->
+        <!-- Action Area -->
         <div class="flex justify-end w-full">
             <div class="flex flex-col w-64">
-                <!-- Generate Button (Rounded Corners) -->
                 <button 
                     id="generateBtn"
-                    class="w-full px-6 py-3 bg-white hover:bg-gray-200 text-black text-sm font-bold rounded-xl shadow-lg transition-all duration-200 active:scale-95 focus:outline-none uppercase tracking-wider"
+                    class="flex items-center justify-center w-full px-6 py-3 bg-white hover:bg-gray-200 text-black text-sm font-bold rounded-xl shadow-lg transition-all duration-200 active:scale-95 focus:outline-none uppercase tracking-wider"
                 >
-                    Generate Invoice
+                    <span id="btnText">Generate Invoice</span>
+                    <div id="btnSpinner" class="hidden spinner"></div>
                 </button>
+            </div>
+        </div>
+
+        <!-- Result Card Area (Appears after response) -->
+        <div id="resultContainer" class="hidden w-full flex justify-end mt-8 fade-in-up">
+            <div 
+                id="invoiceCard" 
+                class="group relative w-full max-w-md bg-[#252525] border border-white/5 rounded-2xl overflow-hidden shadow-2xl cursor-pointer hover:border-white/20 transition-all duration-300"
+            >
+                <!-- Half Preview Window (Non-interactive) -->
+                <div class="relative h-48 w-full bg-black overflow-hidden pointer-events-none">
+                    <iframe 
+                        id="previewFrame"
+                        src="https://docs.google.com/document/d/1wrb-IMQGVc01pgHF_SSqNGt9Mi4XkAmo/edit?usp=sharing&embedded=true" 
+                        class="w-full h-full border-none opacity-60 grayscale scale-110"
+                    ></iframe>
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#252525] via-transparent to-transparent"></div>
+                </div>
+
+                <!-- Card Content -->
+                <div class="p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-1">Generated Document</p>
+                            <h3 class="text-white text-xl font-semibold">PDF Invoice</h3>
+                        </div>
+                        <div class="bg-white/10 p-2 rounded-lg">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-4 italic">Click anywhere on this card to download your file.</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Empty Workspace -->
-    <div class="flex items-center justify-center min-height-screen h-screen">
-        <!-- Main content area remains empty -->
-    </div>
-
-    <div id="status-message">Invoice generated successfully!</div>
+    <!-- Notification Toast -->
+    <div id="notification-toast">Your invoice is being generated, wait a few seconds. Thank You!</div>
 
     <script>
         const N8N_WEBHOOK_URL = "https://n8n.norkx.space/webhook/inv-sys";
-
         const params = new URLSearchParams(window.location.search);
 
-        // Email extraction (UNCHANGED CORE LOGIC)
+        // Core extraction
         let email = params.get("email") || params.get("name");
-        if (email) {
-            email = decodeURIComponent(email);
-        }
+        if (email) email = decodeURIComponent(email);
 
-        // Extract user name (UI only)
         let userName = params.get("user");
         if (userName) {
             userName = decodeURIComponent(userName);
@@ -96,60 +159,81 @@
         }
 
         const generateBtn = document.getElementById('generateBtn');
-        const message = document.getElementById('status-message');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const toast = document.getElementById('notification-toast');
+        const resultContainer = document.getElementById('resultContainer');
+        const invoiceCard = document.getElementById('invoiceCard');
+
+        let currentDocumentUrl = "";
 
         if (!email) {
             generateBtn.disabled = true;
             generateBtn.innerText = "Invalid Access";
             generateBtn.classList.add("opacity-50", "cursor-not-allowed");
-            console.error("No email parameter found in URL.");
         }
 
-        generateBtn.addEventListener('click', async function() {
+        // Handle Download logic when card is clicked
+        invoiceCard.addEventListener('click', () => {
+            if (currentDocumentUrl) {
+                // Creates a temporary anchor to force download
+                const link = document.createElement('a');
+                link.href = currentDocumentUrl;
+                link.setAttribute('download', 'Invoice.pdf');
+                link.setAttribute('target', '_blank'); // Fallback for browsers that block direct download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
 
+        generateBtn.addEventListener('click', async function() {
             if (!email) return;
 
-            try {
-                message.innerText = "Generating invoice...";
-                message.style.display = 'block';
-                generateBtn.disabled = true;
+            // 1. Show UI changes
+            btnText.classList.add('hidden');
+            btnSpinner.classList.remove('hidden');
+            generateBtn.disabled = true;
 
+            // 2. Show Toast Notification
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+
+            try {
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        email: email
-                    })
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email })
                 });
 
-                if (!response.ok) {
-                    throw new Error("Server error");
-                }
+                if (!response.ok) throw new Error("Server error");
 
                 const data = await response.json();
 
                 if (data.success && data.documentUrl) {
-                    message.innerText = "Invoice generated successfully!";
-
-                    setTimeout(() => {
-                        window.open(data.documentUrl, "_blank");
-                    }, 800);
-
+                    currentDocumentUrl = data.documentUrl;
+                    
+                    // Show the result card
+                    resultContainer.classList.remove('hidden');
+                    
+                    // Reset button state
+                    btnSpinner.classList.add('hidden');
+                    btnText.classList.remove('hidden');
+                    generateBtn.disabled = false;
                 } else {
                     throw new Error("Invalid response from server");
                 }
 
             } catch (error) {
                 console.error(error);
-                message.innerText = "Something went wrong.";
-            }
-
-            setTimeout(() => {
-                message.style.display = 'none';
+                // Reset button on error
+                btnSpinner.classList.add('hidden');
+                btnText.innerText = "Error - Try Again";
+                btnText.classList.remove('hidden');
                 generateBtn.disabled = false;
-            }, 3000);
+            }
         });
     </script>
 
