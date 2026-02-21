@@ -31,25 +31,30 @@
 </head>
 <body class="relative">
 
-    <!-- User Name Display -->
-    <div 
-        id="userDisplay"
-        class="absolute top-6 left-8 text-white text-lg font-semibold opacity-90 tracking-wide"
-    ></div>
+    <!-- Control Group (User Info + Button) -->
+    <div class="absolute top-8 left-8 flex flex-col gap-4">
+        <!-- User Name Display (Larger) -->
+        <div 
+            id="userDisplay"
+            class="text-white text-3xl font-bold opacity-100 tracking-tight"
+        ></div>
 
-    <button 
-        id="generateBtn"
-        class="absolute top-6 right-6 px-5 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded transition-all duration-200 active:scale-95 focus:outline-none"
-    >
-        Generate Invoice
-    </button>
+        <!-- Generate Button (Now placed below user name) -->
+        <button 
+            id="generateBtn"
+            class="w-fit px-6 py-2.5 bg-white hover:bg-gray-200 text-black text-sm font-semibold rounded shadow-lg transition-all duration-200 active:scale-95 focus:outline-none"
+        >
+            Generate Invoice
+        </button>
+    </div>
 
+    <!-- Background Placeholder -->
     <div class="flex items-center justify-center min-height-screen h-screen">
-        <div class="text-center opacity-30">
-            <svg class="mx-auto h-16 w-16 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="text-center opacity-20">
+            <svg class="mx-auto h-20 w-20 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <p class="mt-4 text-sm text-gray-400">No documents generated yet</p>
+            <p class="mt-4 text-sm text-gray-500 font-medium">No documents generated yet</p>
         </div>
     </div>
 
