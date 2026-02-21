@@ -31,31 +31,29 @@
 </head>
 <body class="relative">
 
-    <!-- Control Group (User Info + Button) -->
-    <div class="absolute top-8 left-8 flex flex-col gap-4">
-        <!-- User Name Display (Larger) -->
+    <!-- Dashboard Sidebar/Control Group -->
+    <div class="absolute top-10 left-10 flex flex-col gap-6 w-64">
+        <!-- User Name Display -->
         <div 
             id="userDisplay"
-            class="text-white text-3xl font-bold opacity-100 tracking-tight"
+            class="text-white text-3xl font-bold tracking-tight"
         ></div>
 
-        <!-- Generate Button (Now placed below user name) -->
+        <!-- Divider Line -->
+        <div class="h-px w-full bg-white/10"></div>
+
+        <!-- Generate Button -->
         <button 
             id="generateBtn"
-            class="w-fit px-6 py-2.5 bg-white hover:bg-gray-200 text-black text-sm font-semibold rounded shadow-lg transition-all duration-200 active:scale-95 focus:outline-none"
+            class="w-full px-6 py-3 bg-white hover:bg-gray-200 text-black text-sm font-bold rounded shadow-lg transition-all duration-200 active:scale-95 focus:outline-none uppercase tracking-wider"
         >
             Generate Invoice
         </button>
     </div>
 
-    <!-- Background Placeholder -->
+    <!-- Empty Workspace (Placeholder removed) -->
     <div class="flex items-center justify-center min-height-screen h-screen">
-        <div class="text-center opacity-20">
-            <svg class="mx-auto h-20 w-20 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <p class="mt-4 text-sm text-gray-500 font-medium">No documents generated yet</p>
-        </div>
+        <!-- Main content area is now empty as requested -->
     </div>
 
     <div id="status-message">Invoice generated successfully!</div>
