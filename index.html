@@ -176,11 +176,10 @@
         // Handle Download logic when card is clicked
         invoiceCard.addEventListener('click', () => {
             if (currentDocumentUrl) {
-                // Creates a temporary anchor to force download
                 const link = document.createElement('a');
                 link.href = currentDocumentUrl;
                 link.setAttribute('download', 'Invoice.pdf');
-                link.setAttribute('target', '_blank'); // Fallback for browsers that block direct download
+                link.setAttribute('target', '_blank');
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -194,40 +193,72 @@
             btnText.classList.add('hidden');
             btnSpinner.classList.remove('hidden');
             generateBtn.disabled = true;
+            resultContainer.classList.add('hidden'); // Hide previous result on retry
 
             // 2. Show Toast Notification
+            toast.innerText = "Your invoice is being generated, wait a few seconds. Thank You!";
             toast.classList.add('show');
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
 
             try {
-                const response = await fetch(N8N_WEBHOOK_URL, {
+                // Exponential backoff retry logic for stability
+                const fetchWithRetry = async (url, options, retries = 5, backoff = 1000) => {
+                    try {
+                        const response = await fetch(url, options);
+                        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                        return response;
+                    } catch (err) {
+                        if (retries <= 0) throw err;
+                        await new Promise(resolve => setTimeout(resolve, backoff));
+                        return fetchWithRetry(url, options, retries - 1, backoff * 2);
+                    }
+                };
+
+                const response = await fetchWithRetry(N8N_WEBHOOK_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email: email })
                 });
 
-                if (!response.ok) throw new Error("Server error");
+                const contentType = response.headers.get("content-type");
 
-                const data = await response.json();
-
-                if (data.success && data.documentUrl) {
-                    currentDocumentUrl = data.documentUrl;
-                    
-                    // Show the result card
-                    resultContainer.classList.remove('hidden');
-                    
-                    // Reset button state
-                    btnSpinner.classList.add('hidden');
-                    btnText.classList.remove('hidden');
-                    generateBtn.disabled = false;
+                if (contentType && contentType.includes("application/json")) {
+                    const jsonResponse = await response.json();
+                    // Fallback in case n8n returns JSON with the URL inside it
+                    if (jsonResponse.success && jsonResponse.documentUrl) {
+                        currentDocumentUrl = jsonResponse.documentUrl;
+                    } else if (jsonResponse.url) {
+                        currentDocumentUrl = jsonResponse.url;
+                    } else if (jsonResponse.data && jsonResponse.data.url) {
+                        currentDocumentUrl = jsonResponse.data.url;
+                    } else {
+                        throw new Error("Invalid JSON response format from server");
+                    }
                 } else {
-                    throw new Error("Invalid response from server");
+                    // Handle raw binary file (PDF) response directly
+                    const blob = await response.blob();
+                    currentDocumentUrl = window.URL.createObjectURL(blob);
                 }
 
+                // Show the result card
+                resultContainer.classList.remove('hidden');
+                
+                // Reset button state
+                btnSpinner.classList.add('hidden');
+                btnText.innerText = "Generate Invoice";
+                btnText.classList.remove('hidden');
+                generateBtn.disabled = false;
+
             } catch (error) {
-                console.error(error);
+                console.error("Invoice Generation Error:", error);
+                
+                // Show Error Toast
+                toast.innerText = "Something went wrong. Please try again.";
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+
                 // Reset button on error
                 btnSpinner.classList.add('hidden');
                 btnText.innerText = "Error - Try Again";
