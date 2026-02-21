@@ -207,23 +207,23 @@
 
                 const contentType = response.headers.get("content-type") || "";
 
-                // If it's a PDF or we're not explicitly sure it's JSON, treat as file
-                if (contentType.includes("application/pdf") || !contentType.includes("application/json")) {
+                // ======= FIXED LOGIC =======
+                // Treat everything that is not JSON as a file (Blob)
+                if (!contentType.includes("application/json")) {
                     const blob = await response.blob();
-                    if (blob.size === 0) throw new Error("Received empty file from server");
+                    if (!blob || blob.size === 0) throw new Error("Received empty file from server");
                     currentDocumentUrl = window.URL.createObjectURL(blob);
                 } else {
-                    // It is JSON
+                    // It's JSON; use URL if provided
                     const data = await response.json();
                     const url = data.documentUrl || data.url || data.link;
                     if (url) {
                         currentDocumentUrl = url;
                     } else {
-                        // If JSON doesn't have a URL, maybe it's a success message but we still need the file?
-                        // This fallback tries to handle cases where n8n sends JSON success but the file might be elsewhere
-                        throw new Error("Server confirmed success but provided no file link.");
+                        throw new Error("Server returned JSON but no file link was provided.");
                     }
                 }
+                // ======= END FIXED LOGIC =======
 
                 resultContainer.classList.remove('hidden');
                 btnSpinner.classList.add('hidden');
