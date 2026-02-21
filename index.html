@@ -31,10 +31,11 @@
 </head>
 <body class="relative">
 
-    <!-- New User Name Display (Top Left) -->
-    <div id="userNameDisplay" class="absolute top-6 left-6 text-gray-300 text-sm font-medium">
-        <!-- Name will be injected here -->
-    </div>
+    <!-- User Name Display -->
+    <div 
+        id="userDisplay"
+        class="absolute top-6 left-6 text-white text-sm font-medium opacity-80"
+    ></div>
 
     <button 
         id="generateBtn"
@@ -59,19 +60,17 @@
 
         const params = new URLSearchParams(window.location.search);
 
-        // Extract Email/Name for Webhook logic
+        // Email extraction (UNCHANGED CORE LOGIC)
         let email = params.get("email") || params.get("name");
-        
-        // Extract User Display Name
-        let displayName = params.get("user");
-
-        // Decode parameters
         if (email) {
             email = decodeURIComponent(email);
         }
-        if (displayName) {
-            displayName = decodeURIComponent(displayName);
-            document.getElementById('userNameDisplay').innerText = displayName;
+
+        // NEW: Extract user name
+        let userName = params.get("user");
+        if (userName) {
+            userName = decodeURIComponent(userName);
+            document.getElementById("userDisplay").innerText = userName;
         }
 
         const generateBtn = document.getElementById('generateBtn');
